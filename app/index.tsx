@@ -3,8 +3,10 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, Alert } from "react-nati
 import { useEffect, useState } from "react";
 import { supabase } from "@/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {useRouter} from "expo-router";
 
 export default function Index() {
+    const router = useRouter();
     const [logIn, setLogIn] = useState(true);
     const [signIn, setSignIn] = useState(false);
     const [userName, setUserName] = useState("");
@@ -16,29 +18,16 @@ export default function Index() {
             const isLogIn = await AsyncStorage.getItem("isLogIn");
             if (isLogIn === "yes") {
                 console.log("Bereits eingeloggt");
+                router.replace("/tabs")
             }
         };
         checkLogIn();
-    }, []);
+    },);
 
     const handleLogin = async () => {
         try {
-            let loginEmail = email;
-            if (!email.includes("@")) {
-                const { data, error } = await supabase
-                    .from("profiles")
-                    .select("email")
-                    .eq("username", email)
-                    .maybeSingle();
-                if (error) throw error;
-                if (!data) {
-                    Alert.alert("Fehler", "Benutzername nicht gefunden.");
-                    return;
-                }
-                loginEmail = data.email;
-            }
             const { error } = await supabase.auth.signInWithPassword({
-                email: loginEmail,
+                email,
                 password,
             });
             if (error) {
@@ -46,10 +35,11 @@ export default function Index() {
                 return;
             }
             await AsyncStorage.setItem("isLogIn", "yes");
-            Alert.alert("Erfolg", "Login erfolgreich!");
         } catch (err: any) {
             Alert.alert("Fehler", err.message);
         }
+
+        router.replace("/tabs");
     };
 
     const handleSignIn = async () => {
@@ -71,7 +61,6 @@ export default function Index() {
                 Alert.alert("Fehler", profileError.message);
                 return;
             }
-            Alert.alert("Erfolg", "Account erstellt. Jetzt einloggen!");
             setSignIn(false);
             setLogIn(true);
         } catch (err: any) {
@@ -123,7 +112,7 @@ export default function Index() {
                 <Text style={styles.heading}>Log In</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Email or Username"
+                    placeholder="Email"
                     value={email}
                     onChangeText={setEmail}
                 />
