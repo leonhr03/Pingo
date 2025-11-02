@@ -7,6 +7,7 @@ import {useRouter} from "expo-router";
 
 export default function Index() {
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
     const [logIn, setLogIn] = useState(true);
     const [signIn, setSignIn] = useState(false);
     const [userName, setUserName] = useState("");
@@ -20,7 +21,11 @@ export default function Index() {
                 console.log("Bereits eingeloggt");
                 router.replace("/tabs")
             }
+            else{
+                setIsLoading(false);
+            }
         };
+
         checkLogIn();
     },);
 
@@ -68,74 +73,77 @@ export default function Index() {
         }
     };
 
-    if (signIn) {
-        return (
-            <SafeAreaProvider style={styles.container}>
-                <Text style={styles.heading}>Sign Up</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Username"
-                    value={userName}
-                    onChangeText={setUserName}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                />
-                <TouchableOpacity style={styles.button} onPress={handleSignIn}>
-                    <Text style={styles.buttonText}>Sign Up</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={() => {
-                        setLogIn(true);
-                        setSignIn(false);
-                    }}
-                >
-                    <Text style={styles.text}>Already have an account? Log In</Text>
-                </TouchableOpacity>
-            </SafeAreaProvider>
-        );
-    }
+    if (!isLoading) {
 
-    if (logIn) {
-        return (
-            <SafeAreaProvider style={styles.container}>
-                <Text style={styles.heading}>Log In</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                />
-                <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                    <Text style={styles.buttonText}>Log In</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={() => {
-                        setLogIn(false);
-                        setSignIn(true);
-                    }}
-                >
-                    <Text style={styles.text}>Don’t have an account? Sign Up</Text>
-                </TouchableOpacity>
-            </SafeAreaProvider>
-        );
+        if (signIn) {
+            return (
+                <SafeAreaProvider style={styles.container}>
+                    <Text style={styles.heading}>Sign Up</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Username"
+                        value={userName}
+                        onChangeText={setUserName}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Email"
+                        value={email}
+                        onChangeText={setEmail}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Password"
+                        secureTextEntry
+                        value={password}
+                        onChangeText={setPassword}
+                    />
+                    <TouchableOpacity style={styles.button} onPress={handleSignIn}>
+                        <Text style={styles.buttonText}>Sign Up</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => {
+                            setLogIn(true);
+                            setSignIn(false);
+                        }}
+                    >
+                        <Text style={styles.text}>Already have an account? Log In</Text>
+                    </TouchableOpacity>
+                </SafeAreaProvider>
+            );
+        }
+
+        if (logIn) {
+            return (
+                <SafeAreaProvider style={styles.container}>
+                    <Text style={styles.heading}>Log In</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Email"
+                        value={email}
+                        onChangeText={setEmail}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Password"
+                        secureTextEntry
+                        value={password}
+                        onChangeText={setPassword}
+                    />
+                    <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                        <Text style={styles.buttonText}>Log In</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => {
+                            setLogIn(false);
+                            setSignIn(true);
+                        }}
+                    >
+                        <Text style={styles.text}>Don’t have an account? Sign Up</Text>
+                    </TouchableOpacity>
+                </SafeAreaProvider>
+            );
+        }
     }
 }
 
