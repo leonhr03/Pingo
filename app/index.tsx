@@ -82,18 +82,21 @@ export default function Index() {
                     <TextInput
                         style={styles.input}
                         placeholder="Username"
+                        placeholderTextColor={"#555"}
                         value={userName}
                         onChangeText={setUserName}
                     />
                     <TextInput
                         style={styles.input}
                         placeholder="Email"
+                        placeholderTextColor={"#555"}
                         value={email}
                         onChangeText={setEmail}
                     />
                     <TextInput
                         style={styles.input}
                         placeholder="Password"
+                        placeholderTextColor={"#555"}
                         secureTextEntry
                         value={password}
                         onChangeText={setPassword}
@@ -120,12 +123,14 @@ export default function Index() {
                     <TextInput
                         style={styles.input}
                         placeholder="Email"
+                        placeholderTextColor={"#555"}
                         value={email}
                         onChangeText={setEmail}
                     />
                     <TextInput
                         style={styles.input}
                         placeholder="Password"
+                        placeholderTextColor={"#555"}
                         secureTextEntry
                         value={password}
                         onChangeText={setPassword}
