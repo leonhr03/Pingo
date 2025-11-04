@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
+import {View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ScrollView} from "react-native";
 import {SafeAreaView, useSafeAreaInsets} from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -124,6 +124,7 @@ export default function Account() {
 
     return (
         <SafeAreaView style={styles.container}>
+            <ScrollView  showsVerticalScrollIndicator={false}>
             <TouchableOpacity onPress={pickAndUploadImage}>
                 <Image
                     style={styles.profileImage}
@@ -146,13 +147,13 @@ export default function Account() {
                         renderItem={renderItem}
                         keyExtractor={(item, index) => index.toString()}
                         contentContainerStyle={{paddingBottom: 100}}
-                        showsVerticalScrollIndicator={false}
+                        scrollEnabled={false}
                     />
 
 
             </View>
+            </ScrollView>
 
-            <View style={styles.fakeTabBar}/>
         </SafeAreaView>
     );
 }
