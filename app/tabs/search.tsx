@@ -112,20 +112,7 @@ export default function Search() {
         }
     };
 
-    const follow = async(item_id: string) => {
-        const isFollowed = await AsyncStorage.getItem(`${item_id}/isFollowed`)
-        if (isFollowed === "yes"){
-            await AsyncStorage.setItem(`${item_id}/isFollowed`, "no")
-        }
-        else if(isFollowed === "no" || !isFollowed){
-            await AsyncStorage.setItem(`${item_id}/isFollowed`, "yes")
-        }
-    }
-
-    const renderItem = ({ item }: any) => <CommunityListItem item={item} isFollowed={false}
-                                                             onToggleFollow={function (): void {
-                                                                 throw new Error("Function not implemented.");
-                                                             }} />;
+    const renderItem = ({ item }: any) => <CommunityListItem item={item}/>;
 
     return (
         <SafeAreaView style={styles.container}>

@@ -1,16 +1,61 @@
 import {Text, StyleSheet, ScrollView, Platform, FlatList, View, TextInput} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {Ionicons} from "@expo/vector-icons";
-import {useState} from "react";
+import {lazy, useCallback, useState} from "react";
+import {useFocusEffect} from "expo-router";
+import {supabase} from "@/supabase";
+import {Image} from "expo-image";
 
+interface CommunityContent{
+    title: string;
+    image_url: string;
+}
 
 export default function Home(){
 
-    const communitys = [{title: "oppenau"}, {title: "React Native"}]
+    const [communitys, setCommunitys] = useState<CommunityContent[]>([])
+    const [userId, setUserId] = useState<string | null>(null)
+
+    useFocusEffect(
+        useCallback(() => {
+            loadCommunitys()
+        }, [])
+    )
+
+    const loadCommunitys = async() => {
+
+        const {data} = await supabase.auth.getUser()
+        if(!data.user) return;
+        const currentUserId = data.user.id;
+        setUserId(currentUserId)
+
+        const {data: communitysData} = await supabase
+            .from("communitys")
+            .select("*")
+        if(!communitysData) return;
+
+
+
+        const {data: profilData} = await supabase
+            .from("profiles")
+            .select("followed")
+            .eq("id", currentUserId)
+            .single()
+
+        if(!profilData) return;
+        const followedData = profilData.followed || [];
+
+        const followedCommunitys = communitysData.filter(c => followedData.includes(c.title))
+        setCommunitys(followedCommunitys)
+    }
 
     const renderItem = ({item}: any) => {
         return(
             <View style={styles.itemContainer}>
+                <Image
+                    style={{width: 50, height: 50, borderRadius: 25}}
+                    source={item.image_url}
+                />
                 <Text style={styles.itemText}>{item.title}</Text>
             </View>
         )
@@ -66,7 +111,7 @@ const styles = StyleSheet.create({
 
     itemText: {
         position: "absolute",
-        left: 20,
+        left: 80,
     },
 
     itemIcon: {
