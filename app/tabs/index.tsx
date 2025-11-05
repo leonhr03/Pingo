@@ -1,8 +1,7 @@
-import {Text, StyleSheet, ScrollView, Platform, FlatList, View, TextInput} from "react-native";
+import {Text, StyleSheet, Platform, FlatList, View, TouchableOpacity, Alert} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
-import {Ionicons} from "@expo/vector-icons";
-import {lazy, useCallback, useState} from "react";
-import {useFocusEffect} from "expo-router";
+import { useCallback, useState} from "react";
+import {useFocusEffect, useRouter} from "expo-router";
 import {supabase} from "@/supabase";
 import {Image} from "expo-image";
 
@@ -13,6 +12,7 @@ interface CommunityContent{
 
 export default function Home(){
 
+    const router = useRouter()
     const [communitys, setCommunitys] = useState<CommunityContent[]>([])
     const [userId, setUserId] = useState<string | null>(null)
 
@@ -51,13 +51,13 @@ export default function Home(){
 
     const renderItem = ({item}: any) => {
         return(
-            <View style={styles.itemContainer}>
+            <TouchableOpacity style={styles.itemContainer} onPress={() => router.replace({pathname: "../pages/communityView", params: {community: item.title} })}>
                 <Image
                     style={{width: 50, height: 50, borderRadius: 25}}
                     source={item.image_url}
                 />
                 <Text style={styles.itemText}>{item.title}</Text>
-            </View>
+            </TouchableOpacity>
         )
 
     }

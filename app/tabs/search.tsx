@@ -17,7 +17,6 @@ import * as FileSystem from "expo-file-system/legacy";
 import { decode as atob } from "base-64";
 import { supabase } from "@/supabase";
 import {useFocusEffect} from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import CommunityListItem from "../../components/searchPagecomponent";
 
 export default function Search() {
