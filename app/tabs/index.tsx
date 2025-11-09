@@ -51,7 +51,7 @@ export default function Home(){
 
     const renderItem = ({item}: any) => {
         return(
-            <TouchableOpacity style={styles.itemContainer} onPress={() => router.replace({pathname: "../pages/communityView", params: {community: item.title} })}>
+            <TouchableOpacity style={styles.itemContainer} onPress={() => router.replace({pathname: "../pages/communityView", params: {community: item.title, image: item.image_url} })}>
                 <Image
                     style={{width: 50, height: 50, borderRadius: 25}}
                     source={item.image_url}
