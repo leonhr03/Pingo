@@ -14,7 +14,6 @@ export default function Home(){
 
     const router = useRouter()
     const [communitys, setCommunitys] = useState<CommunityContent[]>([])
-    const [userId, setUserId] = useState<string | null>(null)
 
     useFocusEffect(
         useCallback(() => {
@@ -27,17 +26,13 @@ export default function Home(){
         const {data} = await supabase.auth.getUser()
         if(!data.user) return;
         const currentUserId = data.user.id;
-        setUserId(currentUserId)
 
         const {data: communitysData} = await supabase
             .from("communitys")
             .select("*")
         if(!communitysData) return;
 
-
-
-        const {data: profilData} = await supabase
-            .from("profiles")
+        const {data: profilData} = await supabase.from("profiles")
             .select("followed")
             .eq("id", currentUserId)
             .single()

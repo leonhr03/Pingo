@@ -1,58 +1,70 @@
-import { useCallback, useState } from "react";
-import {View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ScrollView} from "react-native";
-import {SafeAreaView, useSafeAreaInsets} from "react-native-safe-area-context";
+import React, { useCallback, useState } from "react";
+import {
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    TouchableOpacity,
+    Alert,
+    ScrollView,
+    TouchableWithoutFeedback, TextInput, Modal
+} from "react-native";
+import {SafeAreaView} from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { decode as atob } from 'base-64';
 import { useFocusEffect } from "expo-router";
 import { supabase } from "@/supabase";
 import * as FileSystem from 'expo-file-system/legacy';
+import { Ionicons } from "@expo/vector-icons";
 
 export default function Account() {
-    const insets = useSafeAreaInsets();
-    const pings = [
-        { title: "ping test", image: "../../assets/images/icon.png" },
-        { title: "ping text2", image: "../../assets/images/icon.png" },
-        { title: "ping text3", image: "../../assets/images/icon.png" },
-        { title: "ping text4", image: "../../assets/images/icon.png" },
-        { title: "ping text5", image: "../../assets/images/icon.png" },
-    ];
+    const [pings, setPings] = useState<any[]>([]);
 
     const [user, setUser] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [profileUrl, setProfileUrl] = useState<string | null>(null);
-
+    const [communitys, setCommunitys] = useState<any[]>([]);
+    const [currentPing, setCurrentPing] = useState<any>(null);
+    const [comments, setComments] = useState<any[]>([]);
+    const [commentSheet, setCommentSheet] = useState(false);
 
     useFocusEffect(
         useCallback(() => {
-            const getUser = async () => {
-                try {
-                    const { data: authData, error: authError } = await supabase.auth.getUser();
-                    if (authError) throw authError;
+            const loadCommunitys = async() => {
 
-                    const user = authData?.user;
-                    if (!user) return;
+                const {data} = await supabase.auth.getUser()
+                if(!data.user) return;
 
-                    const { data: profileData, error: profileError } = await supabase
-                        .from("profiles")
-                        .select("*")
-                        .eq("id", user.id)
-                        .single();
+                const {data: userInfo} = await supabase.from("profiles")
+                    .select("*")
+                    .eq("id", data.user.id)
+                    .single()
 
-                    if (profileError) console.error(profileError);
+                setUser(userInfo)
+                setProfileUrl(userInfo.avatar_url)
 
-                    setUser(profileData);
-                    setProfileUrl(profileData.avatar_url);
-                } catch (err) {
-                    console.error("Fehler beim Laden des Profils:", err);
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-            getUser();
+                const {data: communitysData} = await supabase
+                    .from("communitys")
+                    .select("*")
+                if(!communitysData) return;
+
+                const {data: profilData} = await supabase.from("profiles")
+                    .select("followed")
+                    .eq("id", data?.user.id)
+                    .single()
+
+                if(!profilData) return;
+                const followedData = profilData.followed || [];
+
+                const followedCommunitys = communitysData.filter(c => followedData.includes(c.title))
+                setCommunitys(followedCommunitys)
+
+                setIsLoading(false)
+            }
+            loadCommunitys();
         }, [])
     );
-
     const pickAndUploadImage = async () => {
         try {
             const result = await ImagePicker.launchImageLibraryAsync({
@@ -100,15 +112,99 @@ export default function Account() {
         }
     };
 
+    const loadPingsOnClick = async (item: any) => {
+        const { data } = await supabase
+            .from("communitys")
+            .select("*")
+            .eq("title", item.title)
+            .single();
+
+        if (!data?.pings) {
+            setPings([]);
+            return;
+        }
+
+        const filtered = data.pings.filter((ping: any) => ping.user === user.username);
+
+
+        const pingsWithLikesAndComments = await Promise.all(
+            filtered.map(async (ping: any) => {
+                const { data: likeData, error } = await supabase
+                    .from("likes")
+                    .select("likes")
+                    .eq("ping", ping.title)
+                    .maybeSingle();
+
+
+
+                if (error) {
+                    console.error("Fehler beim Laden der Likes:", error);
+                    return { ...ping, likeCount: 0, comments: ""}
+                }
+
+
+                const likesArray = likeData?.likes ?? [];
+                return { ...ping, likeCount: likesArray.length};
+            })
+        );
+
+
+
+
+        setPings(pingsWithLikesAndComments);
+    };
+
+    const openCommentSheet = async (item: any) => {
+        setCurrentPing(item.title);
+
+        const { data: commentsData, error: commentsError } = await supabase
+            .from("comments")
+            .select("comments")
+            .eq("ping", item.title)
+            .maybeSingle();
+
+        setComments(commentsError ? [] : commentsData?.comments ?? []);
+        setCommentSheet(true);
+    };
+
+    const communityItem = ({ item }: any) => {
+        return (
+            <TouchableOpacity style={styles.communityItem} onPress={() => {loadPingsOnClick(item)}}>
+                <Image
+                    style={styles.communityPic}
+                    source={item.image_url}
+                    contentFit="contain"
+                />
+                <Text style={styles.communityText}>{item.title}</Text>
+            </TouchableOpacity>
+        );
+    };
+
     const renderItem = ({ item }: any) => {
         return (
             <View style={styles.item}>
                 <Text style={styles.itemHeading}>{item.title}</Text>
+
                 <Image
                     style={styles.itemPic}
-                    source={require(`../../assets/images/icon.png`)}
-                    contentFit="contain"
+                    source={item.image_url ? { uri: item.image_url } : require("../../assets/images/icon.png")}
+                    contentFit="cover"
                 />
+
+                <View style={styles.bottomRow}>
+                    <TouchableOpacity style={styles.likeButton}>
+                        <Ionicons
+                            name={"heart-outline"}
+                            size={25}
+                            color={"#000"}
+                        />
+                        <Text style={{ marginLeft: 6 }}>{item.likeCount}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.commentButton} onPress={() => openCommentSheet(item)}>
+                        <Ionicons name="chatbubble-outline" size={25} color="#000" />
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     };
@@ -143,6 +239,12 @@ export default function Account() {
                 <Text style={styles.text}>Your Pings</Text>
 
                     <FlatList
+                        data={communitys}
+                        renderItem={communityItem}
+                        style={{flexDirection: "row", height: 100}}
+                        horizontal/>
+
+                    <FlatList
                         data={pings}
                         renderItem={renderItem}
                         keyExtractor={(item, index) => index.toString()}
@@ -153,6 +255,36 @@ export default function Account() {
 
             </View>
             </ScrollView>
+
+            <Modal transparent visible={commentSheet} animationType="slide">
+                <View style={{ flex: 1, justifyContent: "flex-end" }}>
+                    <TouchableWithoutFeedback onPress={() => setCommentSheet(false)}>
+                        <View style={{ flex: 1 }} />
+                    </TouchableWithoutFeedback>
+
+                    <View style={styles.commentContainer}>
+                        <Text style={styles.commentHeading}>{currentPing}</Text>
+
+                        <FlatList
+                            data={comments}
+                            renderItem={({ item }) => (
+                                <View style={styles.commentItem}>
+                                    <View style={styles.itemHeaderView}>
+                                        <Image source={item.userImage} style={styles.itemProfileImage} />
+                                        <Text style={styles.itemProfileName}>{item.user}</Text>
+                                    </View>
+                                    <Text style={styles.comment}>{item.comment}</Text>
+                                </View>
+                            )}
+                            keyExtractor={(item, index) => index.toString()}
+                            style={{ width: "100%", flex: 1 }}
+                            contentContainerStyle={{ paddingBottom: 80 }}
+                            nestedScrollEnabled
+                            showsVerticalScrollIndicator={false}
+                        />
+                    </View>
+                </View>
+            </Modal>
 
         </SafeAreaView>
     );
@@ -237,12 +369,81 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         marginTop: 10,
         alignSelf: "center",
+        backgroundColor: "#999",
     },
 
-    fakeTabBar: {
-        height: 60,
-        marginBottom: 20,
-        position: "absolute",
-        bottom: 0,
+    communityItem: {
+        marginHorizontal: 5,
+        flexDirection: "column",
+        alignItems: "center",
     },
+
+    bottomRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 10,
+    },
+    likeButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginRight: 10,
+    },
+    commentButton: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+
+    communityPic: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+    },
+
+    communityText: {
+        fontSize: 12,
+        color: "#000",
+        textAlign: "center",
+        marginTop: 10,
+    },
+
+    commentContainer: {
+        minHeight: "80%",
+        width: "100%",
+        backgroundColor: "#f9fafb",
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        padding: 20,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+    },
+    commentHeading: { fontSize: 25, color: "#000", fontWeight: "bold" },
+
+    commentItem: {
+        width: "100%",
+        backgroundColor: "#f9fafb",
+        minHeight: 60,
+        borderWidth: 1,
+        borderColor: "rgba(74, 144, 226, 0.3)",
+        borderRadius: 15,
+        justifyContent: "center",
+        padding: 10,
+        marginVertical: 5,
+    },
+
+    comment: {
+        color: "#000",
+        fontSize: 18,
+        flexWrap: "wrap",
+        marginTop: 5,
+    },
+
+    itemHeaderView: { width: "100%", height: 60, flexDirection: "row", justifyContent: "center", alignItems: "center", padding: 0 },
+    itemProfileImage: { width: 40, height: 40, borderRadius: 20, position: "absolute", left: 0 },
+    itemProfileName: { fontSize: 16, color: "#000", fontWeight: "bold", position: "absolute", left: 50 },
+
+
+
 });
