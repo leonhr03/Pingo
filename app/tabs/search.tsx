@@ -147,7 +147,7 @@ export default function Search() {
                                     source={
                                         newPictureUri
                                             ? { uri: newPictureUri }
-                                            : require("../../assets/images/icon.png")
+                                            : require("../../assets/images/addIconRound.png")
                                     }
                                     style={styles.newImage}
                                 />

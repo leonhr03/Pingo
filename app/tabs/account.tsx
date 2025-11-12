@@ -121,7 +121,7 @@ export default function Account() {
 
         if (!data?.pings) {
             setPings([]);
-            return;
+            return
         }
 
         const filtered = data.pings.filter((ping: any) => ping.user === user.username);
@@ -187,7 +187,7 @@ export default function Account() {
 
                 <Image
                     style={styles.itemPic}
-                    source={item.image_url ? { uri: item.image_url } : require("../../assets/images/icon.png")}
+                    source={item.image_url ? { uri: item.image_url } : require("../../assets/images/addIconRound.png")}
                     contentFit="cover"
                 />
 
@@ -241,7 +241,8 @@ export default function Account() {
                     <FlatList
                         data={communitys}
                         renderItem={communityItem}
-                        style={{flexDirection: "row", height: 100}}
+                        style={styles.communityListBackground}
+                        contentContainerStyle={{ paddingRight: 30 }}
                         horizontal/>
 
                     <FlatList
@@ -328,6 +329,25 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         borderRadius: 15,
     },
+
+    communityListBackground: {
+        flexDirection: "row",
+        height: 100,
+        width: "100%",
+        marginTop: 10,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: "rgba(74, 144, 226, 0.1)",
+        borderRadius: 30,
+        backgroundColor: "#f9fafb",
+        shadowOffset: { width: 0, height: 4 },
+        shadowColor: "#4a90e2",
+        shadowOpacity: 0.5,
+        shadowRadius: 5,
+        elevation: 4,
+        padding: 10,
+    },
+
     pingView: {
         width: "100%",
         marginTop: 40,
