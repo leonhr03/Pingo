@@ -3,81 +3,39 @@ import {
     StyleSheet,
     Platform,
     FlatList,
+    Modal,
     View,
-    TouchableOpacity,
-    TouchableWithoutFeedback, Modal, TextInput, ScrollView
+    TouchableWithoutFeedback,
+    TextInput,
+    TouchableOpacity, ScrollView
 } from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
-import React, { useCallback, useState} from "react";
-import {useFocusEffect, useRouter} from "expo-router";
+import PingItem from "@/components/pingItem";
+import React, {useCallback, useState} from "react";
+import {useFocusEffect} from "expo-router";
 import {supabase} from "@/supabase";
 import {Image} from "expo-image";
-import PingItem from "@/components/pingItem";
-import {Ionicons} from "@expo/vector-icons";
 
-export default function Home(){
-
-    const router = useRouter()
-    const [communitys, setCommunitys] = useState<any[]>([])
+export default function Explore() {
     const [pings, setPings] = useState<any[]>([])
     const [currentPing, setCurrentPing] = useState<any>(null)
-    const [currentCommunity, setCurrentCommunity] = useState<any>(null)
     const [comments, setComments] = useState<any[]>([])
     const [commentSheet, setCommentSheet] = useState(false)
     const [newComment, setNewComment] = useState("")
 
     useFocusEffect(
         useCallback(() => {
-            loadCommunitys()
-        }, [])
+            loadPings()
+        },[])
     )
 
-    const loadCommunitys = async() => {
-
-        const {data} = await supabase.auth.getUser()
-        if(!data.user) return;
-        const currentUserId = data.user.id;
-
-        const {data: communitysData} = await supabase
-            .from("communitys")
+    const loadPings = async() => {
+        const {data: pingsData} = await supabase
+            .from("pings")
             .select("*")
-        if(!communitysData) return;
+            .order("created_at", { ascending: false })
 
-        const {data: profilData} = await supabase.from("profiles")
-            .select("followed")
-            .eq("id", currentUserId)
-            .single()
-
-        if(!profilData) return;
-        const followedData = profilData.followed || [];
-
-        const followedCommunitys = communitysData.filter(c => followedData.includes(c.title))
-        setCommunitys(followedCommunitys)
-    }
-
-    const loadPings = async(item: any) => {
-
-        setCurrentCommunity(item);
-
-        const { data, error } = await supabase
-            .from("communitys")
-            .select("*")
-            .eq("title", item.title)
-            .single();
-
-        if (error) {
-            console.error("Load community error:", error);
-            return;
-        }
-
-        const pings = data?.pings ?? []
-
-        if(pings.length === 0){
-            setPings([])
-        }
-
-        setPings(pings);
-
+        setPings(pingsData ?? [])
     }
 
     const openCommentSheet = async (item: any) => {
@@ -86,7 +44,7 @@ export default function Home(){
         const { data: commentsData, error: commentsError } = await supabase
             .from("comments")
             .select("comments")
-            .eq("ping", item.id)
+            .eq("ping", item.title)
             .maybeSingle();
 
         setComments(commentsError ? [] : commentsData?.comments ?? []);
@@ -111,7 +69,7 @@ export default function Home(){
 
             const { error } = await supabase
                 .from("comments")
-                .upsert({ ping: currentPing.id, comments: updatedList }, { onConflict: "ping" });
+                .upsert({ ping: currentPing, comments: updatedList }, { onConflict: "ping" });
 
             if (error) {
                 console.error("addComment error:", error);
@@ -125,59 +83,19 @@ export default function Home(){
         }
     };
 
-
-    const communityItem = ({ item }: any) => {
-        return (
-            <TouchableOpacity style={styles.communityItem} onPress={() => loadPings(item)}>
-                <Image
-                    style={styles.communityPic}
-                    source={item.image_url}
-                    contentFit="contain"
-                />
-                <Text style={styles.communityText}>{item.title}</Text>
-            </TouchableOpacity>
-        );
-    };
-
-
     return(
         <SafeAreaView style={styles.container}>
-
             <ScrollView showsVerticalScrollIndicator={false}>
+            <Text style={styles.heading}>Explore</Text>
+            <FlatList
+                data={pings}
+                renderItem={({ item }) => <PingItem item={item} onCommentPress={openCommentSheet} />}
+                keyExtractor={(item, index) => index.toString()}
+                contentContainerStyle={{ paddingBottom: 100 }}
+                scrollEnabled={false}
+            />
 
-                <View style={styles.header}>
-                    <Text style={styles.heading}>Communitys</Text>
-                    <TouchableOpacity onPress={() => router.replace("/pages/search")}>
-                        <Ionicons name={"search"} size={30} style={styles.searchIcon}/>
-                    </TouchableOpacity>
-                </View>
-
-
-                <FlatList
-                    data={communitys}
-                    renderItem={communityItem}
-                    style={styles.communityListBackground}
-                    contentContainerStyle={{ paddingRight: 30 }}
-                    horizontal/>
-
-                {currentCommunity
-                    ? (
-                        <FlatList
-                            data={pings}
-                            renderItem={({ item }) => <PingItem item={item} onCommentPress={openCommentSheet} />}
-                            keyExtractor={(item, index) => index.toString()}
-                            contentContainerStyle={{ paddingBottom: 100 }}
-                        />
-                    )
-                    : (
-                        <Text style={{ textAlign: "center", marginTop: 20, color: "#999" }}>
-                            No Pings Found
-                            (select a community)
-                        </Text>
-                    )
-                }
             </ScrollView>
-
             <Modal transparent visible={commentSheet} animationType="slide">
                 <View style={{ flex: 1, justifyContent: "flex-end" }}>
                     <TouchableWithoutFeedback onPress={() => setCommentSheet(false)}>
@@ -220,8 +138,6 @@ export default function Home(){
                     </View>
                 </View>
             </Modal>
-
-
         </SafeAreaView>
     )
 }
@@ -229,95 +145,18 @@ export default function Home(){
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#fff',
         padding: 16,
-        backgroundColor: "#fff",
-    },
-
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-        paddingRight: 20,
-        marginTop: Platform.OS === "ios" ? 0 : 20,
-    },
-
-    searchIcon: {
-       color: "#000",
     },
 
     heading: {
         fontSize: 25,
         fontWeight: "bold",
         color: "#000",
+        marginTop: Platform.OS === "ios" ? 0 : 20,
+        marginBottom: 20,
+        textAlign: "left",
     },
-
-    communityListBackground: {
-        flexDirection: "row",
-        height: 100,
-        width: "100%",
-        marginTop: 10,
-        marginBottom: 10,
-        borderWidth: 1,
-        borderColor: "rgba(74, 144, 226, 0.1)",
-        borderRadius: 30,
-        backgroundColor: "#f9fafb",
-        shadowOffset: { width: 0, height: 4 },
-        shadowColor: "#4a90e2",
-        shadowOpacity: 0.5,
-        shadowRadius: 5,
-        elevation: 4,
-        padding: 10,
-    },
-    itemContainer: {
-        width: "90%",
-        height: 60,
-        flexDirection: "row",
-        padding: 10,
-        backgroundColor: "#f9fafb",
-        borderWidth: 1,
-        borderColor: "rgba(74, 144, 226, 0.1)",
-        borderRadius: 30,
-        shadowColor: "#4a90e2",
-        shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.5,
-        shadowRadius: 4,
-        elevation: 4,
-        marginTop: 15,
-        justifyContent: "space-between",
-        alignItems: "center",
-        alignSelf: "center"
-    },
-
-    itemText: {
-        position: "absolute",
-        left: 80,
-    },
-
-    itemIcon: {
-        position: "absolute",
-        right: 20,
-    },
-
-    communityItem: {
-        marginHorizontal: 5,
-        flexDirection: "column",
-        alignItems: "center",
-    },
-
-    communityPic: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-    },
-
-    communityText: {
-        fontSize: 12,
-        color: "#000",
-        textAlign: "center",
-        marginTop: 10,
-    },
-
 
     commentContainer: {
         minHeight: "80%",
@@ -383,22 +222,5 @@ const styles = StyleSheet.create({
     itemProfileName: { fontSize: 16, color: "#000", fontWeight: "bold", position: "absolute", left: 50 },
     bottomRow: { width: "100%", flexDirection: "row", alignSelf: "center", alignItems: "flex-end", marginTop: 10 },
 
-    modalContainer: {
-        minHeight: "60%",
-        width: "100%",
-        backgroundColor: "#f9fafb",
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        padding: 20,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-    },
-    modalHeading: { fontSize: 25, color: "#000", fontWeight: "bold", marginBottom: 20 },
-    modalInput: { width: "90%", height: 60, backgroundColor: "#fff", borderWidth: 1, borderColor: "#000", borderRadius: 15, padding: 10 },
-    modalImage: { width: 300, height: 300, borderRadius: 30, marginTop: 20 },
-    modalButton: { width: "70%", height: 50, backgroundColor: "#4a90e2", borderRadius: 15, alignItems: "center", justifyContent: "center", marginTop: 20 },
-    modalButtonText: { fontSize: 20, color: "#fff", fontWeight: "bold" },
+
 })

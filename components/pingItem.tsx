@@ -28,13 +28,13 @@ export default function PingItem({ item, onCommentPress }: PingItemProps) {
         fetchUser();
     }, []);
 
-    // Like-Status und Anzahl aus JSONB-Array laden
+
     useEffect(() => {
         const fetchLikes = async () => {
             const { data, error } = await supabase
                 .from("likes")
                 .select("likes")
-                .eq("ping", item.title)
+                .eq("ping", item.id)
                 .maybeSingle();
 
             if (error) {
@@ -48,7 +48,7 @@ export default function PingItem({ item, onCommentPress }: PingItemProps) {
         };
 
         if (username) fetchLikes();
-    }, [username, item.title]);
+    }, [username, item.id]);
 
     const handleLike = async () => {
         if (!username) return;
@@ -58,7 +58,7 @@ export default function PingItem({ item, onCommentPress }: PingItemProps) {
             const { data } = await supabase
                 .from("likes")
                 .select("likes")
-                .eq("ping", item.title)
+                .eq("ping", item.id)
                 .maybeSingle();
 
             let likesArray: string[] = data?.likes ?? [];
@@ -77,7 +77,7 @@ export default function PingItem({ item, onCommentPress }: PingItemProps) {
             const { error } = await supabase
                 .from("likes")
                 .upsert(
-                    [{ ping: item.title, likes: likesArray }],
+                    [{ ping: item.id, likes: likesArray }],
                     { onConflict: "ping" }
                 );
 
@@ -94,16 +94,13 @@ export default function PingItem({ item, onCommentPress }: PingItemProps) {
                 <Text style={styles.itemProfileName}>{item.user}</Text>
             </View>
 
-            <Text style={styles.itemHeading}>{item.title}</Text>
+            {item.title &&(
+                <Text style={styles.itemHeading}>{item.title}</Text>
+            )}
 
-            {item.image_url ? (
+
+            {item.image_url && (
                 <Image style={styles.itemPic} source={item.image_url} contentFit="cover" />
-            ) : (
-                <Image
-                    style={styles.itemPic}
-                    source={require("../assets/images/icon.png")}
-                    contentFit="contain"
-                />
             )}
 
             <View style={styles.bottomRow}>

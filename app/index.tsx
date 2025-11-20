@@ -173,6 +173,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         width: "80%",
         marginTop: 20,
+        color: "#000",
     },
     button: {
         width: "60%",

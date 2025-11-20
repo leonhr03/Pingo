@@ -105,7 +105,6 @@ export default function Account() {
             await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", user.id);
 
             setProfileUrl(publicUrl);
-            Alert.alert("✅ Erfolgreich", "Profilbild aktualisiert!");
         } catch (err) {
             console.error(err);
             Alert.alert("Fehler", "Beim Hochladen ist ein Problem aufgetreten.");
@@ -132,7 +131,7 @@ export default function Account() {
                 const { data: likeData, error } = await supabase
                     .from("likes")
                     .select("likes")
-                    .eq("ping", ping.title)
+                    .eq("ping", ping.id)
                     .maybeSingle();
 
 
@@ -160,7 +159,7 @@ export default function Account() {
         const { data: commentsData, error: commentsError } = await supabase
             .from("comments")
             .select("comments")
-            .eq("ping", item.title)
+            .eq("ping", item.id)
             .maybeSingle();
 
         setComments(commentsError ? [] : commentsData?.comments ?? []);
@@ -183,13 +182,24 @@ export default function Account() {
     const renderItem = ({ item }: any) => {
         return (
             <View style={styles.item}>
-                <Text style={styles.itemHeading}>{item.title}</Text>
 
-                <Image
-                    style={styles.itemPic}
-                    source={item.image_url ? { uri: item.image_url } : require("../../assets/images/addIconRound.png")}
-                    contentFit="cover"
-                />
+                <View style={styles.itemHeaderView}>
+                    <Image source={item.userImage} style={styles.itemProfileImage} />
+                    <Text style={styles.itemProfileName}>{item.user}</Text>
+                </View>
+
+                {item.title && (
+                    <Text style={styles.itemHeading}>{item.title}</Text>
+                )}
+
+                {item.image_url && (
+                    <Image
+                        style={styles.itemPic}
+                        source={item.image_url ? { uri: item.image_url } : require("../../assets/images/addIconRound.png")}
+                        contentFit="cover"
+                    />
+                )}
+
 
                 <View style={styles.bottomRow}>
                     <TouchableOpacity style={styles.likeButton}>
@@ -227,7 +237,7 @@ export default function Account() {
                     source={
                         profileUrl
                             ? { uri: profileUrl }
-                            : require("../../assets/images/icon.png")
+                            : require("../../assets/images/addIconRound.png")
                     }
                     contentFit="cover"
                 />
