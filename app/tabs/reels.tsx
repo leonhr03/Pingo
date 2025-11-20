@@ -1,12 +1,11 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Dimensions, Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import PagerView from "react-native-pager-view";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ResizeMode, Video } from "expo-av";
+import { Video } from "expo-av";
 import { useFocusEffect } from "expo-router";
 import { supabase } from "@/supabase";
-
-const { height, width } = Dimensions.get("window");
+import VideoItem from "@/components/videoItem";
 
 type VideoItem = {
     id: string;
@@ -73,19 +72,12 @@ export default function Reels() {
                 onPageSelected={onPageSelected}
             >
                 {videos.map((item, index) => (
-                    <View key={item.id} style={{ width, height }}>
-                        <Video
-                            ref={(ref) => {
-                                videoRefs.current[index] = ref;
-                            }}
-                            source={{ uri: item.video_url }}
-                            style={{ width: "100%", height: "100%" }}
-                            resizeMode={ResizeMode.COVER}
-                            isLooping
-                            shouldPlay={index === 0}
-                            useNativeControls={false}
-                        />
-                    </View>
+                    <VideoItem
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        videoRefs={videoRefs}
+                    />
                 ))}
             </PagerView>
 
