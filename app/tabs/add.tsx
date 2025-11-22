@@ -184,9 +184,16 @@ export default function Explore() {
 
             const { data: publicUrlData } = supabase.storage.from("videos").getPublicUrl(fileName);
 
+            const { data: userInfo } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", currentUser?.id)
+                .single();
+
             const { error: insertError } = await supabase.from("reels").insert({
                 video_url: publicUrlData.publicUrl,
                 user_id: currentUser.id,
+                user_image: userInfo.avatar_url
             });
             if (insertError) return console.log("Insert error:", insertError);
 
